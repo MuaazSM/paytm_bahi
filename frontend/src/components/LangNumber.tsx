@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, type TextStyle } from 'react-native';
+import { Text, type StyleProp, type TextStyle } from 'react-native';
 import { useMerchantStore } from '../store/merchantStore';
 
 interface LangNumberProps {
@@ -19,7 +19,7 @@ interface LangNumberProps {
    * hi-* / mr-* render Devanagari digits, everything else Latin.
    */
   language?: string;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
 }
 
 // Hindu-Arabic 0–9 → Devanagari ०–९ (U+0966 … U+096F)
