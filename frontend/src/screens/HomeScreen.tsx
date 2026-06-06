@@ -16,6 +16,9 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
 import { getInsightsSummary, getAlerts } from '../api';
 import type { InsightsSummary, Alert } from '../api/types';
 import { useMerchantStore } from '../store/merchantStore';
@@ -24,17 +27,36 @@ import { colors } from '../theme';
 import { LangNumber } from '../components/LangNumber';
 import { AlertPill } from '../components/AlertPill';
 import { InsightCard } from '../components/InsightCard';
+import type { TabParamList } from '../navigation/types';
 
 type Status = 'loading' | 'ready' | 'error';
 
 export default function HomeScreen() {
+  const tabNav = useNavigation<BottomTabNavigationProp<TabParamList>>();
   const merchant = useMerchantStore((s) => s.merchant);
   const alerts = useAlertStore((s) => s.alerts);
   const setAlerts = useAlertStore((s) => s.setAlerts);
+  const dismiss = useAlertStore((s) => s.dismiss);
 
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [status, setStatus] = useState<Status>('loading');
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleAlertPress = useCallback(
+    (_a: Alert) => {
+      // Every actionable alert (reorder/stockout/wastage/dead_stock/pairing/margin)
+      // surfaces in the Insights tab where the merchant can act. Jump there.
+      tabNav.navigate('Insights');
+    },
+    [tabNav],
+  );
+
+  const handleAlertDismiss = useCallback(
+    (id: number) => {
+      void dismiss(id);
+    },
+    [dismiss],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -81,6 +103,9 @@ export default function HomeScreen() {
           <ReadyState
             summary={summary}
             alerts={activeAlerts}
+            alertsLoading={false}
+            onAlertPress={handleAlertPress}
+            onAlertDismiss={handleAlertDismiss}
           />
         ) : null}
       </ScrollView>
@@ -162,8 +187,17 @@ function RevenueHero({ summary }: { summary: InsightsSummary }) {
   );
 }
 
-function AlertStrip({ alerts }: { alerts: Alert[] }) {
-  if (alerts.length === 0) return null;
+function AlertStrip({
+  alerts,
+  loading,
+  onAlertPress,
+  onAlertDismiss,
+}: {
+  alerts: Alert[];
+  loading: boolean;
+  onAlertPress: (alert: Alert) => void;
+  onAlertDismiss: (id: number) => void;
+}) {
   return (
     <View style={{ marginTop: 20 }}>
       <Text
@@ -177,15 +211,67 @@ function AlertStrip({ alerts }: { alerts: Alert[] }) {
       >
         ज़रूरी सूचना · Alerts
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-      >
-        {alerts.map((alert) => (
-          <AlertPill key={alert.id} alert={alert} />
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
+          {[0, 1, 2].map((i) => (
+            <View
+              key={i}
+              style={{
+                width: 160,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                marginRight: 8,
+                opacity: 0.6,
+              }}
+            />
+          ))}
+        </View>
+      ) : alerts.length === 0 ? (
+        <View
+          style={{
+            marginHorizontal: 16,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: colors.success,
+              marginRight: 8,
+            }}
+          />
+          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+            कोई सूचना नहीं · All clear
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+        >
+          {alerts.map((alert) => (
+            <AlertPill
+              key={alert.id}
+              alert={alert}
+              onPress={() => onAlertPress(alert)}
+              onDismiss={() => onAlertDismiss(alert.id)}
+            />
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -287,14 +373,25 @@ function CardCol({ children }: { children: React.ReactNode }) {
 function ReadyState({
   summary,
   alerts,
+  alertsLoading,
+  onAlertPress,
+  onAlertDismiss,
 }: {
   summary: InsightsSummary;
   alerts: Alert[];
+  alertsLoading: boolean;
+  onAlertPress: (alert: Alert) => void;
+  onAlertDismiss: (id: number) => void;
 }) {
   return (
     <>
       <RevenueHero summary={summary} />
-      <AlertStrip alerts={alerts} />
+      <AlertStrip
+        alerts={alerts}
+        loading={alertsLoading}
+        onAlertPress={onAlertPress}
+        onAlertDismiss={onAlertDismiss}
+      />
       <InsightsGrid summary={summary} />
     </>
   );

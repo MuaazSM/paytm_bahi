@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Volume2, AlertTriangle, AlertOctagon, Info } from 'lucide-react-native';
+import { Volume2, AlertTriangle, AlertOctagon, Info, X } from 'lucide-react-native';
 
 import type { Alert } from '../api/types';
 import { speakText } from '../api';
@@ -9,8 +9,10 @@ import { colors } from '../theme';
 
 interface AlertPillProps {
   alert: Alert;
-  /** Optional secondary tap handler (e.g. navigate to product). */
+  /** Optional secondary tap handler (e.g. navigate to relevant action). */
   onPress?: () => void;
+  /** When provided, renders an inline ✕ button that dismisses the alert. */
+  onDismiss?: () => void;
 }
 
 const SEVERITY_BG: Record<Alert['severity'], string> = {
@@ -30,7 +32,7 @@ const SEVERITY_ICON: Record<Alert['severity'], React.ComponentType<{ color: stri
  * Single tap: speak the alert's `spoken_message` via Bulbul TTS (the
  * "proactive voice alert" from the hero loop) and run optional onPress.
  */
-export function AlertPill({ alert, onPress }: AlertPillProps) {
+export function AlertPill({ alert, onPress, onDismiss }: AlertPillProps) {
   const language = useMerchantStore((s) => s.merchant?.language);
   const [speaking, setSpeaking] = useState(false);
   const Icon = SEVERITY_ICON[alert.severity];
@@ -85,6 +87,21 @@ export function AlertPill({ alert, onPress }: AlertPillProps) {
       <View style={{ opacity: speaking ? 1 : 0.7 }}>
         <Volume2 color="#FFFFFF" size={14} />
       </View>
+      {onDismiss ? (
+        <Pressable
+          onPress={onDismiss}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss alert"
+          hitSlop={8}
+          style={({ pressed }) => ({
+            marginLeft: 8,
+            padding: 2,
+            opacity: pressed ? 0.6 : 0.85,
+          })}
+        >
+          <X color="#FFFFFF" size={14} />
+        </Pressable>
+      ) : null}
     </Pressable>
   );
 }

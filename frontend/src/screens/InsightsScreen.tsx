@@ -20,28 +20,37 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 
-import { getInsightsSummary } from '../api';
-import type { InsightsSummary } from '../api/types';
+import { getInsightsSummary, getAlerts } from '../api';
+import type { Alert, InsightsSummary } from '../api/types';
 import { LangNumber } from '../components/LangNumber';
 import { StockBadge } from '../components/StockBadge';
+import { AlertPill } from '../components/AlertPill';
+import { useAlertStore } from '../store/alertStore';
 import { colors } from '../theme';
+import { BellRing } from 'lucide-react-native';
 
 type Status = 'loading' | 'ready' | 'error';
 
 export default function InsightsScreen() {
+  const alerts = useAlertStore((s) => s.alerts);
+  const setAlerts = useAlertStore((s) => s.setAlerts);
+  const dismiss = useAlertStore((s) => s.dismiss);
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [status, setStatus] = useState<Status>('loading');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const s = await getInsightsSummary();
+      const [s, a] = await Promise.all([getInsightsSummary(), getAlerts(false)]);
       setSummary(s);
+      setAlerts(a.alerts);
       setStatus('ready');
     } catch {
       setStatus('error');
     }
-  }, []);
+  }, [setAlerts]);
+
+  const activeAlerts = alerts.filter((a) => !a.dismissed);
 
   useEffect(() => {
     load();
@@ -71,7 +80,13 @@ export default function InsightsScreen() {
         ) : status === 'error' ? (
           <ErrorState onRetry={load} />
         ) : summary ? (
-          <ReadyState summary={summary} />
+          <>
+            <AlertsSection
+              alerts={activeAlerts}
+              onDismiss={(id) => void dismiss(id)}
+            />
+            <ReadyState summary={summary} />
+          </>
         ) : null}
         <PoweredBySarvam />
       </ScrollView>
@@ -164,6 +179,53 @@ function ActionButton({
     >
       <Text style={{ color, fontSize: 12, fontWeight: '700' }}>{label}</Text>
     </Pressable>
+  );
+}
+
+// --- Alerts -----------------------------------------------------------------
+
+function AlertsSection({
+  alerts,
+  onDismiss,
+}: {
+  alerts: Alert[];
+  onDismiss: (id: number) => void;
+}) {
+  return (
+    <View style={styles.section}>
+      <SectionHeader
+        icon={BellRing}
+        hi="ज़रूरी सूचना"
+        en="Alerts"
+        tone={colors.warning}
+      />
+      {alerts.length === 0 ? (
+        <View style={[styles.sectionCard, { padding: 14, flexDirection: 'row', alignItems: 'center' }]}>
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: colors.success,
+              marginRight: 10,
+            }}
+          />
+          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+            अभी सब ठीक है · No active alerts
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.alertsWrap}>
+          {alerts.map((alert) => (
+            <AlertPill
+              key={alert.id}
+              alert={alert}
+              onDismiss={() => onDismiss(alert.id)}
+            />
+          ))}
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -575,6 +637,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
+  },
+  alertsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
 
   row: {
