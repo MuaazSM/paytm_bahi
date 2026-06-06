@@ -19,6 +19,7 @@ from schemas import (
 )
 from services.insights import evaluate_alerts
 from services.match import resolve_items
+from services.ocr import OcrError, extract_text
 from services.parse import ParseError, parse_transcript
 from services.speech import SttError, transcribe
 
@@ -171,7 +172,53 @@ def sales_confirm(
     )
 
 
-# TODO: POST /sales/ocr (multipart, P2 stub)
+@router.post("/sales/ocr", response_model=SaleDraftResponse)
+async def sales_ocr(
+    image: UploadFile = File(...),
+    language: str | None = Form(default=None),
+    merchant: Merchant = Depends(require_merchant),
+    session: Session = Depends(get_session),
+) -> SaleDraftResponse:
+    image_bytes = await image.read()
+    if not image_bytes:
+        raise _error(400, "validation_error", "Empty image upload")
+
+    lang = language or merchant.language
+    filename = image.filename or "page.jpg"
+
+    try:
+        ocr = extract_text(image_bytes, lang, filename=filename)
+    except OcrError as exc:
+        raise _error(400, "ocr_failed", str(exc))
+
+    transcript = ocr.text
+
+    try:
+        parsed = parse_transcript(transcript)
+    except ParseError as exc:
+        raise _error(
+            400,
+            "parse_failed",
+            str(exc),
+            detail={"transcript": exc.transcript, "language_detected": ocr.language_code},
+        )
+
+    products = session.exec(
+        select(Product).where(Product.merchant_id == merchant.id)
+    ).all()
+    line_items = resolve_items(parsed.items, list(products))
+    total_amount = sum(li.line_total for li in line_items)
+
+    return SaleDraftResponse(
+        draft_id=f"tmp_{secrets.token_hex(2)}",
+        source=SaleSource.ocr,
+        transcript=transcript,
+        language_detected=parsed.language_detected or ocr.language_code,
+        needs_clarification=parsed.needs_clarification,
+        clarification=parsed.clarification,
+        line_items=line_items,
+        total_amount=total_amount,
+    )
 
 
 def _parse_iso_bound(value: str, field: str, end_of_day: bool) -> datetime:

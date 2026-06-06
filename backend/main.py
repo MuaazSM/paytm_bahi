@@ -1,3 +1,6 @@
+import logging
+import os
+import threading
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -11,6 +14,34 @@ from db import engine, init_db
 from routers import admin, assistant, auth as auth_router, insights, products, sales
 from schemas import HealthResponse
 from seed import ensure_seeded
+
+log = logging.getLogger("dukaaniq")
+
+
+def _prewarm_sarvam() -> None:
+    """Open a Sarvam connection on startup so the first live demo request isn't cold.
+    Best-effort: any failure is logged and swallowed — never block the app from starting."""
+    if not os.environ.get("SARVAM_API_KEY"):
+        log.info("prewarm: SARVAM_API_KEY not set, skipping")
+        return
+    try:
+        from sarvamai import SarvamAI
+
+        client = SarvamAI(api_subscription_key=os.environ["SARVAM_API_KEY"], timeout=5.0)
+        # Tiny chat ping — establishes TLS, warms DNS/connection pool, exercises the
+        # exact code path /sales/voice and /assistant/query use.
+        client.chat.completions(
+            model="sarvam-30b",
+            messages=[
+                {"role": "system", "content": "Reply with the single character: ok"},
+                {"role": "user", "content": "ping"},
+            ],
+            temperature=0.0,
+            max_tokens=4,
+        )
+        log.info("prewarm: Sarvam chat ready")
+    except Exception as exc:
+        log.warning("prewarm: Sarvam ping failed (%s) — continuing", exc.__class__.__name__)
 
 app = FastAPI(title="Dukaan IQ API", version="0.1.0")
 
@@ -32,6 +63,9 @@ def _startup() -> None:
     init_db()
     with Session(engine) as session:
         ensure_seeded(session)
+    # Pre-warm Sarvam in a background thread so app startup stays fast even if
+    # Sarvam is slow/unreachable. The demo's first real call lands on a warm pool.
+    threading.Thread(target=_prewarm_sarvam, name="sarvam-prewarm", daemon=True).start()
 
 
 @app.exception_handler(HTTPException)
@@ -65,6 +99,23 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
                 "code": "validation_error",
                 "message": "Request validation failed",
                 "detail": exc.errors(),
+            }
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Backstop: any uncaught error becomes the standard error envelope, never a
+    bare FastAPI 500. Demo rule: never a dead end on stage."""
+    log.exception("unhandled exception: %s", exc.__class__.__name__)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": {
+                "code": "upstream_timeout",
+                "message": "Unexpected server error",
+                "detail": None,
             }
         },
     )
