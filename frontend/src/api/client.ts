@@ -78,6 +78,15 @@ export const speakText = (text: string, language: string = 'hi-IN'): Promise<Spe
 export const queryAssistant = (text: string, language?: string): Promise<AssistantQueryResponse> =>
   apiClient.post<AssistantQueryResponse>('/assistant/query', { text, language }).then(r => r.data);
 
+export const queryAssistantAudio = (audioUri: string, language?: string): Promise<AssistantQueryResponse> => {
+  const form = new FormData();
+  form.append('audio', { uri: audioUri, name: 'question.m4a', type: 'audio/m4a' } as unknown as Blob);
+  if (language) form.append('language', language);
+  return apiClient.post<AssistantQueryResponse>('/assistant/query', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
+
 // Admin
 export const resetDemo = (): Promise<ResetResponse> =>
   apiClient.post<ResetResponse>('/admin/reset').then(r => r.data);

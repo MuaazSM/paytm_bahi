@@ -269,6 +269,19 @@ export const queryAssistant = (_text: string, _language?: string): Promise<Assis
     data: { top_movers: [{ name: 'Parle-G Biscuit', units: 47 }] },
   });
 
+export const queryAssistantAudio = (_uri: string, _language?: string): Promise<AssistantQueryResponse> =>
+  delay(1400, {
+    question_text: 'kya khatam hone wala hai?',
+    answer_text: 'Parle-G aur Amul Milk khatam hone wale hain — abhi order karein.',
+    answer_audio_url: '',
+    data: {
+      running_low: [
+        { name: 'Parle-G Biscuit', stock: 4 },
+        { name: 'Amul Milk 500ml', stock: 14 },
+      ],
+    },
+  });
+
 export const resetDemo = (): Promise<ResetResponse> => {
   _products = PRODUCTS.map((p) => ({ ...p }));
   _alerts = ALERTS.map((a) => ({ ...a }));

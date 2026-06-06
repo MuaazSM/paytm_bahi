@@ -23,6 +23,7 @@ export const getAlerts      = impl.getAlerts;
 export const dismissAlert   = impl.dismissAlert;
 export const speakText      = impl.speakText;
 export const queryAssistant = impl.queryAssistant;
+export const queryAssistantAudio = impl.queryAssistantAudio;
 export const resetDemo      = impl.resetDemo;
 
 export { apiClient } from './client';
