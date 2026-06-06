@@ -13,7 +13,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function RootNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="Onboarding"
+      // Demo mode: skip Onboarding and land on the dashboard directly.
+      // merchantStore is pre-seeded with the demo merchant so screens that
+      // read merchant.name / merchant.language render correctly.
+      initialRouteName="MainTabs"
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
