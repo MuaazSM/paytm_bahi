@@ -5,7 +5,6 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +24,8 @@ import type { Alert, InsightsSummary } from '../api/types';
 import { LangNumber } from '../components/LangNumber';
 import { StockBadge } from '../components/StockBadge';
 import { AlertPill } from '../components/AlertPill';
+import { Skeleton } from '../components/Skeleton';
+import { MountAnimate } from '../components/MountAnimate';
 import { useAlertStore } from '../store/alertStore';
 import { colors } from '../theme';
 import { BellRing } from 'lucide-react-native';
@@ -216,12 +217,10 @@ function AlertsSection({
         </View>
       ) : (
         <View style={styles.alertsWrap}>
-          {alerts.map((alert) => (
-            <AlertPill
-              key={alert.id}
-              alert={alert}
-              onDismiss={() => onDismiss(alert.id)}
-            />
+          {alerts.map((alert, i) => (
+            <MountAnimate key={alert.id} delay={i * 80}>
+              <AlertPill alert={alert} onDismiss={() => onDismiss(alert.id)} />
+            </MountAnimate>
           ))}
         </View>
       )}
@@ -546,12 +545,14 @@ function LoadingState() {
   return (
     <>
       {[140, 160, 130, 160, 120].map((h, i) => (
-        <View key={i} style={[styles.skeleton, { height: h }]} />
+        <Skeleton
+          key={i}
+          height={h}
+          radius={16}
+          delay={i * 90}
+          style={{ marginHorizontal: 16, marginBottom: 12 }}
+        />
       ))}
-      <View style={styles.loadingRow}>
-        <ActivityIndicator size="small" color={colors.paytmBlue} />
-        <Text style={styles.loadingHint}>Loading insights…</Text>
-      </View>
     </>
   );
 }
@@ -677,27 +678,6 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  skeleton: {
-    backgroundColor: colors.surface,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    opacity: 0.6,
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  loadingHint: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginLeft: 8,
   },
 
   errorBox: {

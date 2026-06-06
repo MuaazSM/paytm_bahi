@@ -5,7 +5,6 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -27,6 +26,8 @@ import { colors } from '../theme';
 import { LangNumber } from '../components/LangNumber';
 import { AlertPill } from '../components/AlertPill';
 import { InsightCard } from '../components/InsightCard';
+import { Skeleton } from '../components/Skeleton';
+import { MountAnimate } from '../components/MountAnimate';
 import type { TabParamList } from '../navigation/types';
 
 type Status = 'loading' | 'ready' | 'error';
@@ -214,18 +215,13 @@ function AlertStrip({
       {loading ? (
         <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
           {[0, 1, 2].map((i) => (
-            <View
+            <Skeleton
               key={i}
-              style={{
-                width: 160,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                marginRight: 8,
-                opacity: 0.6,
-              }}
+              width={160}
+              height={32}
+              radius={16}
+              delay={i * 120}
+              style={{ marginRight: 8 }}
             />
           ))}
         </View>
@@ -262,13 +258,14 @@ function AlertStrip({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16 }}
         >
-          {alerts.map((alert) => (
-            <AlertPill
-              key={alert.id}
-              alert={alert}
-              onPress={() => onAlertPress(alert)}
-              onDismiss={() => onAlertDismiss(alert.id)}
-            />
+          {alerts.map((alert, i) => (
+            <MountAnimate key={alert.id} delay={i * 80}>
+              <AlertPill
+                alert={alert}
+                onPress={() => onAlertPress(alert)}
+                onDismiss={() => onAlertDismiss(alert.id)}
+              />
+            </MountAnimate>
           ))}
         </ScrollView>
       )}
@@ -400,60 +397,24 @@ function ReadyState({
 function LoadingState() {
   return (
     <>
-      <SkeletonBlock height={140} marginHorizontal={16} />
-      <View style={{ flexDirection: 'row', marginTop: 16, paddingHorizontal: 8 }}>
+      <Skeleton height={140} radius={16} style={{ marginHorizontal: 16, marginVertical: 8 }} />
+      <View style={{ flexDirection: 'row', marginTop: 8, paddingHorizontal: 8 }}>
         <View style={{ width: '50%' }}>
-          <SkeletonBlock height={160} marginHorizontal={8} />
+          <Skeleton height={160} radius={16} delay={80} style={{ marginHorizontal: 8, marginVertical: 8 }} />
         </View>
         <View style={{ width: '50%' }}>
-          <SkeletonBlock height={160} marginHorizontal={8} />
+          <Skeleton height={160} radius={16} delay={160} style={{ marginHorizontal: 8, marginVertical: 8 }} />
         </View>
       </View>
       <View style={{ flexDirection: 'row', paddingHorizontal: 8 }}>
         <View style={{ width: '50%' }}>
-          <SkeletonBlock height={160} marginHorizontal={8} />
+          <Skeleton height={160} radius={16} delay={240} style={{ marginHorizontal: 8, marginVertical: 8 }} />
         </View>
         <View style={{ width: '50%' }}>
-          <SkeletonBlock height={160} marginHorizontal={8} />
+          <Skeleton height={160} radius={16} delay={320} style={{ marginHorizontal: 8, marginVertical: 8 }} />
         </View>
       </View>
-      <View
-        style={{
-          marginTop: 12,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ActivityIndicator size="small" color={colors.paytmBlue} />
-        <Text style={{ marginLeft: 8, color: colors.textSecondary, fontSize: 13 }}>
-          Loading dashboard…
-        </Text>
-      </View>
     </>
-  );
-}
-
-function SkeletonBlock({
-  height,
-  marginHorizontal,
-}: {
-  height: number;
-  marginHorizontal: number;
-}) {
-  return (
-    <View
-      style={{
-        height,
-        marginHorizontal,
-        marginVertical: 8,
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: colors.border,
-        opacity: 0.6,
-      }}
-    />
   );
 }
 
@@ -495,16 +456,19 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         onPress={onRetry}
         accessibilityRole="button"
         accessibilityLabel="Retry loading dashboard"
-        style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: 16,
-          paddingVertical: 10,
-          paddingHorizontal: 18,
-          borderRadius: 12,
-          backgroundColor: pressed ? colors.paytmBlueDark : colors.paytmBlue,
-          minHeight: 44,
-        })}
+        style={({ pressed }) => [
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: 16,
+            paddingVertical: 10,
+            paddingHorizontal: 18,
+            borderRadius: 12,
+            backgroundColor: colors.paytmBlue,
+            minHeight: 44,
+          },
+          pressed && { backgroundColor: colors.paytmBlueDark },
+        ]}
       >
         <RefreshCw color="#FFFFFF" size={16} />
         <Text style={{ color: '#FFFFFF', fontWeight: '700', marginLeft: 8 }}>

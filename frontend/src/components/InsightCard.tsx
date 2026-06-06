@@ -92,17 +92,19 @@ export function InsightCard({
         onPress={onAction}
         accessibilityRole="button"
         accessibilityLabel={actionLabel}
-        style={({ pressed }) => ({
-          marginTop: 14,
-          alignSelf: 'flex-start',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 8,
-          paddingHorizontal: 12,
-          borderRadius: 12,
-          backgroundColor: pressed ? colors.paytmSkyTint : 'transparent',
-          minHeight: 36,
-        })}
+        style={({ pressed }) => [
+          {
+            marginTop: 14,
+            alignSelf: 'flex-start',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 12,
+            minHeight: 36,
+          },
+          pressed && { backgroundColor: colors.paytmSkyTint },
+        ]}
       >
         <Text style={{ color: fg, fontSize: 14, fontWeight: '700', marginRight: 2 }}>
           {actionLabel}

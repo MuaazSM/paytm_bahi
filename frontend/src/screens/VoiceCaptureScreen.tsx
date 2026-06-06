@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   Pressable,
   StyleSheet,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -212,18 +214,31 @@ function PhaseLabel({ phase }: { phase: Phase }) {
     toneFg = colors.danger;
   }
 
+  // Re-fire a short fade-in whenever the phase changes so the copy
+  // swap feels intentional rather than a jump cut.
+  const fade = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    fade.setValue(0);
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [phase, fade]);
+
   return (
-    <View style={{ alignItems: 'center', marginBottom: 24 }}>
-      <Text
-        style={{ color: toneFg, fontSize: 22, fontWeight: '700' }}
-        accessibilityLiveRegion="polite"
-      >
+    <Animated.View
+      style={{ alignItems: 'center', marginBottom: 24, opacity: fade }}
+      accessibilityLiveRegion="polite"
+    >
+      <Text style={{ color: toneFg, fontSize: 22, fontWeight: '700' }}>
         {hi}
       </Text>
       <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 4 }}>
         {en}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 

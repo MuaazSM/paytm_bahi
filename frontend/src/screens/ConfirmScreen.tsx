@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Modal,
   FlatList,
   StyleSheet,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -340,14 +342,45 @@ function Footer({
 }
 
 function SuccessOverlay() {
+  const fade = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.2)).current;
+  const lift = useRef(new Animated.Value(8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 5,
+        tension: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(lift, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fade, scale, lift]);
+
   return (
-    <View style={styles.successOverlay} pointerEvents="none">
-      <View style={styles.successCircle}>
+    <Animated.View style={[styles.successOverlay, { opacity: fade }]} pointerEvents="none">
+      <Animated.View style={[styles.successCircle, { transform: [{ scale }] }]}>
         <Check color="#FFFFFF" size={48} strokeWidth={3} />
-      </View>
-      <Text style={styles.successText}>हो गया!</Text>
-      <Text style={styles.successCaption}>Sale saved</Text>
-    </View>
+      </Animated.View>
+      <Animated.Text style={[styles.successText, { transform: [{ translateY: lift }] }]}>
+        हो गया!
+      </Animated.Text>
+      <Animated.Text style={[styles.successCaption, { transform: [{ translateY: lift }] }]}>
+        Sale saved
+      </Animated.Text>
+    </Animated.View>
   );
 }
 

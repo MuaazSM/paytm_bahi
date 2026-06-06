@@ -36,20 +36,22 @@ export function MicFAB({ onPress, recording = false, size = SIZE_DEFAULT }: MicF
         accessibilityRole="button"
         accessibilityLabel={recording ? 'Stop recording' : 'Record sale'}
         accessibilityState={{ busy: recording }}
-        style={({ pressed }) => ({
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: fill,
-          alignItems: 'center',
-          justifyContent: 'center',
-          transform: [{ scale: pressed ? 0.96 : 1 }],
-          shadowColor: fill,
-          shadowOpacity: 0.35,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
-        })}
+        style={({ pressed }) => [
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: fill,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: fill,
+            shadowOpacity: 0.35,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 6,
+          },
+          pressed && { transform: [{ scale: 0.96 }] },
+        ]}
       >
         <Mic color="#FFFFFF" size={Math.round(size * 0.44)} />
       </Pressable>

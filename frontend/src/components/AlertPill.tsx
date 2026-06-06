@@ -58,17 +58,19 @@ export function AlertPill({ alert, onPress, onDismiss }: AlertPillProps) {
       accessibilityRole="button"
       accessibilityLabel={`${alert.message}. Tap to hear.`}
       accessibilityState={{ busy: speaking }}
-      style={({ pressed }) => ({
-        backgroundColor: SEVERITY_BG[alert.severity],
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 9999,
-        marginRight: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        opacity: pressed ? 0.85 : 1,
-        minHeight: 32,
-      })}
+      style={({ pressed }) => [
+        {
+          backgroundColor: SEVERITY_BG[alert.severity],
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 9999,
+          marginRight: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: 32,
+        },
+        pressed && { opacity: 0.85 },
+      ]}
     >
       <Icon color="#FFFFFF" size={14} />
       <Text
@@ -93,11 +95,10 @@ export function AlertPill({ alert, onPress, onDismiss }: AlertPillProps) {
           accessibilityRole="button"
           accessibilityLabel="Dismiss alert"
           hitSlop={8}
-          style={({ pressed }) => ({
-            marginLeft: 8,
-            padding: 2,
-            opacity: pressed ? 0.6 : 0.85,
-          })}
+          style={({ pressed }) => [
+            { marginLeft: 8, padding: 2, opacity: 0.85 },
+            pressed && { opacity: 0.6 },
+          ]}
         >
           <X color="#FFFFFF" size={14} />
         </Pressable>
