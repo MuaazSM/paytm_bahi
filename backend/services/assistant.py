@@ -9,7 +9,7 @@ from sarvamai import SarvamAI
 from schemas import InsightsSummaryResponse
 
 
-SARVAM_TIMEOUT_SECS = 8.0
+SARVAM_TIMEOUT_SECS = 20.0
 
 
 SYSTEM_PROMPT = """You are a business-insights assistant for an Indian kirana shopkeeper.
