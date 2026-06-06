@@ -54,6 +54,14 @@ export const postVoiceSale = (audioUri: string, language?: string): Promise<Voic
 export const confirmSale = (req: ConfirmSaleRequest): Promise<ConfirmSaleResponse> =>
   apiClient.post<ConfirmSaleResponse>('/sales/confirm', req).then(r => r.data);
 
+export const postOcrSale = (imageUri: string): Promise<VoiceDraftResponse> => {
+  const form = new FormData();
+  form.append('image', { uri: imageUri, name: 'daybook.jpg', type: 'image/jpeg' } as unknown as Blob);
+  return apiClient.post<VoiceDraftResponse>('/sales/ocr', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
+
 export const getSales = (params?: { from?: string; to?: string }): Promise<SalesResponse> =>
   apiClient.get<SalesResponse>('/sales', { params }).then(r => r.data);
 

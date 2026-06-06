@@ -165,6 +165,34 @@ export const patchProduct = (id: number, patch: Partial<CreateProductRequest>): 
   return delay(200, updated);
 };
 
+export const postOcrSale = (_imageUri: string): Promise<VoiceDraftResponse> =>
+  delay(1500, {
+    draft_id: 'fixture_ocr_1',
+    source: 'ocr' as const,
+    transcript: '5 maggi packet 70rs\n2 atta 110rs\n1 parle-g 10rs',
+    language_detected: 'en-IN',
+    needs_clarification: false,
+    clarification: null,
+    line_items: [
+      {
+        product_id: 5, matched_name: 'Maggi 70g',
+        qty: 5, unit: 'packet',
+        unit_price: 1400, line_total: 7000, match_confidence: 0.88,
+      },
+      {
+        product_id: 7, matched_name: 'Aashirvaad Atta 1kg',
+        qty: 2, unit: 'kg',
+        unit_price: 5500, line_total: 11000, match_confidence: 0.92,
+      },
+      {
+        product_id: 12, matched_name: 'Parle-G Biscuit',
+        qty: 1, unit: 'packet',
+        unit_price: 1000, line_total: 1000, match_confidence: 0.95,
+      },
+    ],
+    total_amount: 19000,
+  });
+
 export const postVoiceSale = (_audioUri: string, _language?: string): Promise<VoiceDraftResponse> =>
   delay(1200, {
     draft_id: 'fixture_draft_1',
