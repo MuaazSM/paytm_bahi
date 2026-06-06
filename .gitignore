@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+backend/dukaaniq.db
+backend/audio_files/
+.env
+.venv/
