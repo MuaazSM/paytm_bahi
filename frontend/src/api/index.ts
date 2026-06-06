@@ -17,6 +17,7 @@ export const createProduct  = impl.createProduct;
 export const patchProduct   = impl.patchProduct;
 export const postVoiceSale  = impl.postVoiceSale;
 export const confirmSale    = impl.confirmSale;
+export const getSales       = impl.getSales;
 export const getInsightsSummary = impl.getInsightsSummary;
 export const getAlerts      = impl.getAlerts;
 export const dismissAlert   = impl.dismissAlert;

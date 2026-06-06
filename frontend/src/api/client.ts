@@ -5,9 +5,11 @@ import type {
   Product, ProductsResponse, CreateProductRequest,
   VoiceDraftResponse,
   ConfirmSaleRequest, ConfirmSaleResponse,
-  AlertsResponse, Alert,
+  SalesResponse,
+  AlertsResponse, DismissAlertResponse,
   InsightsSummary,
-  AssistantQueryResponse, SpeakResponse,
+  AssistantQueryResponse,
+  SpeakRequest, SpeakResponse,
   ResetResponse,
 } from './types';
 
@@ -52,6 +54,9 @@ export const postVoiceSale = (audioUri: string, language?: string): Promise<Voic
 export const confirmSale = (req: ConfirmSaleRequest): Promise<ConfirmSaleResponse> =>
   apiClient.post<ConfirmSaleResponse>('/sales/confirm', req).then(r => r.data);
 
+export const getSales = (params?: { from?: string; to?: string }): Promise<SalesResponse> =>
+  apiClient.get<SalesResponse>('/sales', { params }).then(r => r.data);
+
 // Insights
 export const getInsightsSummary = (): Promise<InsightsSummary> =>
   apiClient.get<InsightsSummary>('/insights/summary').then(r => r.data);
@@ -61,12 +66,14 @@ export const getAlerts = (includeDismissed = false): Promise<AlertsResponse> =>
     params: { include_dismissed: includeDismissed },
   }).then(r => r.data);
 
-export const dismissAlert = (id: number): Promise<Alert> =>
-  apiClient.post<Alert>(`/insights/alerts/${id}/dismiss`).then(r => r.data);
+export const dismissAlert = (id: number): Promise<DismissAlertResponse> =>
+  apiClient.post<DismissAlertResponse>(`/insights/alerts/${id}/dismiss`).then(r => r.data);
 
 // Assistant
-export const speakText = (text: string, language = 'hi-IN'): Promise<SpeakResponse> =>
-  apiClient.post<SpeakResponse>('/assistant/speak', { text, language }).then(r => r.data);
+export const speakText = (text: string, language: string = 'hi-IN'): Promise<SpeakResponse> => {
+  const body: SpeakRequest = { text, language };
+  return apiClient.post<SpeakResponse>('/assistant/speak', body).then(r => r.data);
+};
 
 export const queryAssistant = (text: string, language?: string): Promise<AssistantQueryResponse> =>
   apiClient.post<AssistantQueryResponse>('/assistant/query', { text, language }).then(r => r.data);

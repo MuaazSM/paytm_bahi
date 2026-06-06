@@ -8,11 +8,14 @@ import type {
   Product, ProductsResponse, CreateProductRequest,
   VoiceDraftResponse,
   ConfirmSaleRequest, ConfirmSaleResponse,
-  AlertsResponse, Alert,
+  SaleListItem, SalesResponse,
+  AlertsResponse, Alert, DismissAlertResponse,
   InsightsSummary,
   AssistantQueryResponse, SpeakResponse,
   ResetResponse,
 } from './types';
+
+
 
 const delay = <T>(ms: number, value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), ms));
@@ -130,6 +133,7 @@ const INSIGHTS: InsightsSummary = {
 // Mutable session state so fixture confirm/dismiss/reset behave realistically.
 let _products = PRODUCTS.map((p) => ({ ...p }));
 let _alerts = ALERTS.map((a) => ({ ...a }));
+let _sales: SaleListItem[] = [];
 let _nextSaleId = 100;
 
 export const login = (_req: LoginRequest): Promise<LoginResponse> =>
@@ -213,16 +217,30 @@ export const confirmSale = (req: ConfirmSaleRequest): Promise<ConfirmSaleRespons
     }
   });
 
+  const sale = {
+    id: _nextSaleId++,
+    total_amount: req.line_items.reduce((s, li) => s + li.unit_price * li.qty, 0),
+    confirmed: true,
+    created_at: new Date().toISOString(),
+  };
+
+  _sales = [
+    { id: sale.id, total_amount: sale.total_amount, source: req.source, created_at: sale.created_at, line_items: req.line_items },
+    ..._sales,
+  ];
+
   return delay(400, {
-    sale: {
-      id: _nextSaleId++,
-      total_amount: req.line_items.reduce((s, li) => s + li.unit_price * li.qty, 0),
-      confirmed: true,
-      created_at: new Date().toISOString(),
-    },
+    sale,
     stock_updates: stockUpdates,
     alerts: newAlerts,
   });
+};
+
+export const getSales = (params?: { from?: string; to?: string }): Promise<SalesResponse> => {
+  let list = _sales;
+  if (params?.from) list = list.filter((s) => s.created_at >= params.from!);
+  if (params?.to)   list = list.filter((s) => s.created_at <= params.to!);
+  return delay(200, { sales: list });
 };
 
 export const getInsightsSummary = (): Promise<InsightsSummary> =>
@@ -233,11 +251,11 @@ export const getAlerts = (includeDismissed = false): Promise<AlertsResponse> =>
     alerts: includeDismissed ? _alerts : _alerts.filter((a) => !a.dismissed),
   });
 
-export const dismissAlert = (id: number): Promise<Alert> => {
+export const dismissAlert = (id: number): Promise<DismissAlertResponse> => {
+  const exists = _alerts.some((a) => a.id === id);
+  if (!exists) return Promise.reject(new Error('not_found'));
   _alerts = _alerts.map((a) => (a.id === id ? { ...a, dismissed: true } : a));
-  const alert = _alerts.find((a) => a.id === id);
-  if (!alert) return Promise.reject(new Error('not_found'));
-  return delay(150, alert);
+  return delay(150, { id, dismissed: true });
 };
 
 export const speakText = (_text: string, _language?: string): Promise<SpeakResponse> =>
@@ -254,6 +272,7 @@ export const queryAssistant = (_text: string, _language?: string): Promise<Assis
 export const resetDemo = (): Promise<ResetResponse> => {
   _products = PRODUCTS.map((p) => ({ ...p }));
   _alerts = ALERTS.map((a) => ({ ...a }));
+  _sales = [];
   _nextSaleId = 100;
   return delay(300, { status: 'reset', products: PRODUCTS.length });
 };

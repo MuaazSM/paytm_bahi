@@ -1,10 +1,25 @@
 // All money fields are integer paise. Never floats.
 
+// Enums (mirror DATA_CONTRACTS.md §1)
+export type Unit =
+  | 'piece' | 'kg' | 'gram' | 'litre' | 'ml' | 'packet' | 'dozen';
+
+export type BusinessType =
+  | 'kirana' | 'chemist' | 'salon' | 'distributor' | 'other';
+
+export type AlertType =
+  | 'reorder' | 'stockout' | 'dead_stock' | 'wastage_risk'
+  | 'margin_leader' | 'pairing';
+
+export type Severity = 'info' | 'warning' | 'critical';
+
+export type SaleSource = 'voice' | 'ocr' | 'manual';
+
 export interface Merchant {
   id: number;
   name: string;
   language: string;
-  business_type: string;
+  business_type: BusinessType;
 }
 
 export interface LoginRequest {
@@ -20,7 +35,7 @@ export interface Product {
   id: number;
   name: string;
   category: string;
-  unit: string;
+  unit: Unit;
   cost_price: number;
   selling_price: number;
   current_stock: number;
@@ -37,7 +52,7 @@ export interface CreateProductRequest {
   name: string;
   aliases: string[];
   category: string;
-  unit: string;
+  unit: Unit;
   cost_price: number;
   selling_price: number;
   current_stock: number;
@@ -46,10 +61,12 @@ export interface CreateProductRequest {
 }
 
 export interface DraftLineItem {
-  product_id: number;
+  // Null when fuzzy matcher could not resolve to a catalog SKU.
+  // UI must prompt the merchant to assign before confirm.
+  product_id: number | null;
   matched_name: string;
   qty: number;
-  unit: string;
+  unit: Unit;
   unit_price: number;
   line_total: number;
   match_confidence: number;
@@ -69,20 +86,20 @@ export interface VoiceDraftResponse {
 export interface ConfirmLineItem {
   product_id: number;
   qty: number;
-  unit: string;
+  unit: Unit;
   unit_price: number;
 }
 
 export interface ConfirmSaleRequest {
-  source: 'voice' | 'ocr' | 'manual';
+  source: SaleSource;
   raw_input: string;
   line_items: ConfirmLineItem[];
 }
 
 export interface Alert {
   id: number;
-  type: string;
-  severity: 'info' | 'warning' | 'critical';
+  type: AlertType;
+  severity: Severity;
   product_id: number | null;
   message: string;
   spoken_message: string;
@@ -108,8 +125,27 @@ export interface ConfirmSaleResponse {
   alerts: Alert[];
 }
 
+// GET /sales — sales history
+export interface SaleListItem {
+  id: number;
+  total_amount: number;
+  source: SaleSource;
+  created_at: string;
+  line_items: ConfirmLineItem[];
+}
+
+export interface SalesResponse {
+  sales: SaleListItem[];
+}
+
 export interface AlertsResponse {
   alerts: Alert[];
+}
+
+// POST /insights/alerts/{id}/dismiss — minimal response per API_CONTRACTS
+export interface DismissAlertResponse {
+  id: number;
+  dismissed: boolean;
 }
 
 export interface TopMover {
@@ -164,11 +200,21 @@ export interface InsightsSummary {
   pairings: Pairing[];
 }
 
+export interface AssistantQueryRequest {
+  text: string;
+  language?: string;
+}
+
 export interface AssistantQueryResponse {
   question_text: string;
   answer_text: string;
   answer_audio_url: string;
   data: Record<string, unknown>;
+}
+
+export interface SpeakRequest {
+  text: string;
+  language?: string;
 }
 
 export interface SpeakResponse {
