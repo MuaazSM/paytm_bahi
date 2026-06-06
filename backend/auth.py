@@ -17,14 +17,10 @@ def _unauthorized(message: str = "Missing or invalid bearer token") -> HTTPExcep
 
 
 def require_merchant(
-    authorization: Optional[str] = Header(default=None),
+    _authorization: Optional[str] = Header(default=None, alias="Authorization"),
     session: Session = Depends(get_session),
 ) -> Merchant:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise _unauthorized()
-    token = authorization.split(" ", 1)[1].strip()
-    if token != STATIC_DEMO_TOKEN:
-        raise _unauthorized()
+    # Auth disabled for the demo: single seeded merchant, no token check.
     merchant = session.exec(select(Merchant).order_by(Merchant.id)).first()
     if merchant is None:
         raise _unauthorized("Merchant not seeded")

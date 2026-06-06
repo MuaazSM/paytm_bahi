@@ -1,0 +1,12 @@
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.env
+dukaaniq.db
+audio_files/*
+.claude
+.git
+.gitignore
+Dockerfile
+.dockerignore
