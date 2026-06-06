@@ -3,6 +3,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   VoiceCapture: undefined;
   Confirm: undefined;
+  OcrCapture: undefined;
 };
 
 export type TabParamList = {

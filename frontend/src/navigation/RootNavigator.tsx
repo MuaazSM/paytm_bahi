@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import VoiceCaptureScreen from '../screens/VoiceCaptureScreen';
 import ConfirmScreen from '../screens/ConfirmScreen';
+import OcrCaptureScreen from '../screens/OcrCaptureScreen';
 import { MainTabs } from './MainTabs';
 import type { RootStackParamList } from './types';
 
@@ -25,6 +26,11 @@ export function RootNavigator() {
       <Stack.Screen
         name="Confirm"
         component={ConfirmScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="OcrCapture"
+        component={OcrCaptureScreen}
         options={{ presentation: 'modal' }}
       />
     </Stack.Navigator>
