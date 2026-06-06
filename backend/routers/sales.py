@@ -1,3 +1,4 @@
+import re
 import secrets
 from datetime import date, datetime, time, timezone
 
@@ -33,6 +34,20 @@ def _error(status: int, code: str, message: str, detail=None) -> HTTPException:
     )
 
 
+_BCP47_RE = re.compile(r"^[a-z]{2,3}(-[A-Z]{2})?$")
+
+
+def _clean_language(value: str | None, fallback: str) -> str:
+    """Swagger UI sends the placeholder literal 'string' when judges hit Execute
+    without editing the field. Anything that isn't a BCP-47-ish code falls back."""
+    if not value:
+        return fallback
+    v = value.strip()
+    if not v or v.lower() == "string":
+        return fallback
+    return v if _BCP47_RE.match(v) else fallback
+
+
 @router.post("/sales/voice", response_model=SaleDraftResponse)
 async def sales_voice(
     audio: UploadFile = File(...),
@@ -44,7 +59,7 @@ async def sales_voice(
     if not audio_bytes:
         raise _error(400, "validation_error", "Empty audio upload")
 
-    lang = language or merchant.language
+    lang = _clean_language(language, merchant.language)
 
     try:
         stt = transcribe(audio_bytes, lang)
@@ -183,7 +198,7 @@ async def sales_ocr(
     if not image_bytes:
         raise _error(400, "validation_error", "Empty image upload")
 
-    lang = language or merchant.language
+    lang = _clean_language(language, merchant.language)
     filename = image.filename or "page.jpg"
 
     try:
