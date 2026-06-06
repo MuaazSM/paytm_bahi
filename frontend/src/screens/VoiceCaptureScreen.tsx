@@ -87,11 +87,28 @@ export default function VoiceCaptureScreen() {
       // doesn't return to a stale capture screen.
       nav.replace('Confirm');
     } catch (e: unknown) {
-      // Try to keep whatever transcript we have so the user can edit manually.
-      const message =
-        e instanceof Error && e.message === 'no_uri'
-          ? 'रिकॉर्डिंग सेव नहीं हुई / Recording was empty'
-          : 'सर्वर से जवाब नहीं आया / Server did not respond';
+      // The contract guarantees that 400 parse_failed includes a `transcript`
+      // at the response root, so the merchant can still see what was heard
+      // and edit manually. Salvage it if present.
+      const ax = e as { response?: { data?: { transcript?: string; error?: { code?: string } } } };
+      const salvagedTranscript = ax?.response?.data?.transcript;
+      if (typeof salvagedTranscript === 'string' && salvagedTranscript.length > 0) {
+        setTranscript(salvagedTranscript);
+      }
+
+      const code = ax?.response?.data?.error?.code;
+      let message: string;
+      if (e instanceof Error && e.message === 'no_uri') {
+        message = 'रिकॉर्डिंग सेव नहीं हुई / Recording was empty';
+      } else if (code === 'stt_failed') {
+        message = 'आवाज़ समझ नहीं आई / Could not transcribe audio';
+      } else if (code === 'parse_failed') {
+        message = 'सामान पहचान नहीं हो पाई / Could not parse items — edit manually below';
+      } else if (code === 'upstream_timeout') {
+        message = 'Sarvam slow है / Sarvam is slow — try again';
+      } else {
+        message = 'सर्वर से जवाब नहीं आया / Server did not respond';
+      }
       setErrorMsg(message);
       setPhase('error');
     }

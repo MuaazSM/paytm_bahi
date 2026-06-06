@@ -18,9 +18,15 @@ const DEMO_TOKEN = 'demo-static-token';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
+  // Voice round-trip (STT + Sarvam-30B parse) can take 6-9s on demo Wi-Fi;
+  // 30s gives headroom without hanging forever on a flaky tunnel.
+  timeout: 30_000,
   headers: {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${DEMO_TOKEN}`,
+    // Skip ngrok's "you are about to visit" HTML interstitial for non-browser
+    // user-agents (axios on RN ≠ a browser UA). No-op against any non-ngrok host.
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
